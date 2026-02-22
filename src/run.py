@@ -17,16 +17,25 @@ COURSE_SELECTION_URL = "https://obs.itu.edu.tr/api/ders-kayit/v21/"
 COURSE_TIME_CHECK_URL = "https://obs.itu.edu.tr/api/ogrenci/Takvim/KayitZamaniKontrolu"
 
 # Both are in seconds:
-DELAY_BETWEEN_TRIES = 3 # WARNING: If you want to tweak this value, decreasing it may cause you to hit the API rate limit.
-DELAY_BETWEEN_TIME_CHECKS = .1  # Determines how often the program will check if the course selection time has started, in seconds.
-SPAM_DUR = 60 * 10 # Deternimes how long the program will spam the API HTTP request, in seconds.
-MAX_EXTRA_WAIT_TIME = 60 * 2 # Determines the maximum extra time the program will wait for the course selection to start, in seconds.
-TIMEOUT_WAIT_DUR = 60 * 60 # If a timeout is detected, the program will wait for this amount of time before trying again.
+DELAY_BETWEEN_TRIES = 3  # WARNING: If you want to tweak this value, decreasing it may cause you to hit the API rate limit.
+DELAY_BETWEEN_TIME_CHECKS = 0.1  # Determines how often the program will check if the course selection time has started, in seconds.
+SPAM_DUR = (
+    60 * 10
+)  # Deternimes how long the program will spam the API HTTP request, in seconds.
+MAX_EXTRA_WAIT_TIME = (
+    60 * 2
+)  # Determines the maximum extra time the program will wait for the course selection to start, in seconds.
+TIMEOUT_WAIT_DUR = (
+    60 * 60
+)  # If a timeout is detected, the program will wait for this amount of time before trying again.
 
-def read_inputs(test_mode: bool=False) -> tuple[str, str, list[str], list[str], dict[str, str], datetime | None]:
+
+def read_inputs(
+    test_mode: bool = False,
+) -> tuple[str, str, list[str], list[str], dict[str, str], datetime | None]:
     Logger.log("Input dosyaları okunuyor...")
     data = json.load(open(CONFIG_FILE_PATH))
-    
+
     # Read account details
     account = data.get("account")
     login, password = account.get("username"), account.get("password")
@@ -41,7 +50,7 @@ def read_inputs(test_mode: bool=False) -> tuple[str, str, list[str], list[str], 
         Logger.log(f"SCRN listesi okundu: {scrn_list}.")
     else:
         scrn_list = []
-        Logger.log(f"SCRN listesi bulunamadı.")
+        Logger.log("SCRN listesi bulunamadı.")
 
     if "crn" in course_data.keys():
         crn_list = []
@@ -58,7 +67,7 @@ def read_inputs(test_mode: bool=False) -> tuple[str, str, list[str], list[str], 
         Logger.log(f"CRN listesi okundu: {crn_list}.")
     else:
         crn_list = []
-        Logger.log(f"CRN listesi bulunamadı.")
+        Logger.log("CRN listesi bulunamadı.")
 
     if test_mode:
         Logger.log("Test modu açık, ders kayıt vakti kontrol edilmeyecek.")
@@ -67,23 +76,55 @@ def read_inputs(test_mode: bool=False) -> tuple[str, str, list[str], list[str], 
         # Read time
         try:
             time_data = data.get("time")
-            start_time = datetime(time_data.get("year"), time_data.get("month"), time_data.get("day"), time_data.get("hour"), time_data.get("minute"), time_data.get("seconds") if "seconds" in time_data.keys() else 0)
+            start_time = datetime(
+                time_data.get("year"),
+                time_data.get("month"),
+                time_data.get("day"),
+                time_data.get("hour"),
+                time_data.get("minute"),
+                time_data.get("seconds") if "seconds" in time_data.keys() else 0,
+            )
             Logger.log(f"Ders seçim zamanı ve tarihi okundu: {start_time}.")
         except Exception:
             start_time = datetime.now()
-            Logger.log(f"Ders seçim zamanı ve tarihi girilmedi, ders seçimine hemen başlanacak.")
-    
+            Logger.log(
+                "Ders seçim zamanı ve tarihi girilmedi, ders seçimine hemen başlanacak."
+            )
+
     return login, password, crn_list, scrn_list, backup_map, start_time
 
-def request_course_selection(token: str, crn_list: list[str], scrn_list: list[str]) -> str:
-    response = requests.post(COURSE_SELECTION_URL, headers={'Authorization': token}, json={"ECRN": crn_list, "SCRN": scrn_list})
-    
+
+def request_course_selection(
+    token: str, crn_list: list[str], scrn_list: list[str]
+) -> str:
+    response = requests.post(
+        COURSE_SELECTION_URL,
+        headers={"Authorization": token},
+        json={"ECRN": crn_list, "SCRN": scrn_list},
+    )
+
     result_code = response.text
     return result_code
 
-parser = argparse.ArgumentParser(prog="itu-ders-secici", description="İTÜ OBS (Kepler) üzerinden zamanlayıcılı ders seçim uygulaması.")
-parser.add_argument("-test", "--test", "-t", help="Test modunu açar, ders kayıt vaktinin gelip gelmediğine bakmaksızın seçim yapar.", action="store_true", default=False)
-parser.add_argument("--show-browser", help="Tarayıcı penceresini gösterir.", action="store_true", default=False)
+
+parser = argparse.ArgumentParser(
+    prog="itu-ders-secici",
+    description="İTÜ OBS (Kepler) üzerinden zamanlayıcılı ders seçim uygulaması.",
+)
+parser.add_argument(
+    "-test",
+    "--test",
+    "-t",
+    help="Test modunu açar, ders kayıt vaktinin gelip gelmediğine bakmaksızın seçim yapar.",
+    action="store_true",
+    default=False,
+)
+parser.add_argument(
+    "--show-browser",
+    help="Tarayıcı penceresini gösterir.",
+    action="store_true",
+    default=False,
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -95,11 +136,22 @@ if __name__ == "__main__":
         SPAM_DUR = 10
 
     # Don't bother asking for shutdown if in test mode.
-    shutdown_on_complete = input("Ders seçimi tamamlandıktan sonra bilgisayar kapatılsın mı? (e/h): ").lower() == "e" if not test_mode else False
-    Logger.log(f"Ders seçim tamamlandıktan sonra bilgisayar {'kapatılacak' if shutdown_on_complete else 'kapatılmayacak'}.")
+    shutdown_on_complete = (
+        input(
+            "Ders seçimi tamamlandıktan sonra bilgisayar kapatılsın mı? (e/h): "
+        ).lower()
+        == "e"
+        if not test_mode
+        else False
+    )
+    Logger.log(
+        f"Ders seçim tamamlandıktan sonra bilgisayar {'kapatılacak' if shutdown_on_complete else 'kapatılmayacak'}."
+    )
 
     # Read input files
-    login, password, crn_list, scrn_list, backup_map, start_time = read_inputs(test_mode)
+    login, password, crn_list, scrn_list, backup_map, start_time = read_inputs(
+        test_mode
+    )
 
     if len(crn_list) == 0 and len(scrn_list) == 0:
         Logger.log("CRN ve SCRN listeleri boş, ders seçimi yapılmayacak.")
@@ -107,33 +159,41 @@ if __name__ == "__main__":
 
     # Wait untill 5 mins before the registration starts, if time left to selection is < 5 mins, start instantly.
     if start_time is not None:
-        delta = (start_time - datetime.now() - timedelta(seconds=60 *5)).total_seconds()
+        delta = (
+            start_time - datetime.now() - timedelta(seconds=60 * 5)
+        ).total_seconds()
 
     if start_time is not None:
         if delta > 0:
-            Logger.log(f"Ders seçimine 5 dakika kalana kadar bekleniyor ({delta} saniye)...")
+            Logger.log(
+                f"Ders seçimine 5 dakika kalana kadar bekleniyor ({delta} saniye)..."
+            )
             sleep(delta)
 
     # === MULTI-THREADED TOKEN FETCHING ===
     # Start token fetcher (will continuously refresh token in background)
-    token_fetcher = ContinuousTokenFetcher(TARGET_URL, login, password, use_headless_browser=headless)
+    token_fetcher = ContinuousTokenFetcher(
+        TARGET_URL, login, password, use_headless_browser=headless
+    )
     token_fetcher.login_to_kepler()  # Perform login
     token_fetcher.start()  # Start the thread
-    
+
     # Wait for the first token to be received
     Logger.log("İlk API Token bekleniyor...")
     if not token_fetcher.wait_for_first_token(timeout=120):
         Logger.log("Token alınamadı, program sonlandırılıyor.")
         token_fetcher.stop()
         exit(1)
-    
+
     Logger.log("Token alındı, arka planda sürekli yenilenmeye devam edecek.")
 
     # Wait untill 45 secs before the registration starts.
     if start_time is not None:
         delta = (start_time - datetime.now() - timedelta(seconds=45)).total_seconds()
         if delta > 0:
-            Logger.log(f"Ders seçimine 45 saniye kalana kadar bekleniyor ({delta} saniye)...")
+            Logger.log(
+                f"Ders seçimine 45 saniye kalana kadar bekleniyor ({delta} saniye)..."
+            )
             sleep(delta)
 
     # Wait untill the registration starts. (Add a buffer to prevent any possible errors.)
@@ -142,14 +202,18 @@ if __name__ == "__main__":
             token_fetcher.driver.minimize_window()
         except:
             pass
-    
+
     if headless:
         Logger.log("Ders seçimine kadar bekleniliyor...")
     else:
-        Logger.log("Ders seçimine kadar bekleniliyor, bu esnada Chrome penceresini kapatmayın...")
+        Logger.log(
+            "Ders seçimine kadar bekleniliyor, bu esnada Chrome penceresini kapatmayın..."
+        )
 
     # Pass token getter function to RequestManager (will get fresh token each time)
-    request_manager = RequestManager(token_fetcher.get_token, COURSE_SELECTION_URL, COURSE_TIME_CHECK_URL, backup_map)
+    request_manager = RequestManager(
+        token_fetcher.get_token, COURSE_SELECTION_URL, COURSE_TIME_CHECK_URL, backup_map
+    )
 
     # If not testing, wait untill the registration by checking the HTTP request.
     if not test_mode:
@@ -163,8 +227,12 @@ if __name__ == "__main__":
         api_check_start_time = datetime.now()
         while request_manager.check_course_selection_time() is False:
             sleep(DELAY_BETWEEN_TIME_CHECKS)
-            if (datetime.now() - api_check_start_time).total_seconds() >= MAX_EXTRA_WAIT_TIME:
-                Logger.log(f"Ders seçimi zaman kontrolü maksimum bekleme süresine ({MAX_EXTRA_WAIT_TIME} saniye) ulaşıldı. Ders seçimi başlamamış gözükmesine rağmen seçmeye çalışılacak.")
+            if (
+                datetime.now() - api_check_start_time
+            ).total_seconds() >= MAX_EXTRA_WAIT_TIME:
+                Logger.log(
+                    f"Ders seçimi zaman kontrolü maksimum bekleme süresine ({MAX_EXTRA_WAIT_TIME} saniye) ulaşıldı. Ders seçimi başlamamış gözükmesine rağmen seçmeye çalışılacak."
+                )
                 break
     # If testing, wait for the time manually.
     else:
@@ -175,12 +243,19 @@ if __name__ == "__main__":
     Logger.log("Dersler Seçiliyor (Token arka planda sürekli yenileniyor)...")
     course_selection_start_time = datetime.now()
     # Select courses, do it until `DURATION_TO_SPAM` secs after the registration starts.
-    while start_time is None or (datetime.now() - course_selection_start_time).total_seconds() < SPAM_DUR:
-        crn_list, scrn_list, timed_out = request_manager.request_course_selection(crn_list, scrn_list)
-        
+    while (
+        start_time is None
+        or (datetime.now() - course_selection_start_time).total_seconds() < SPAM_DUR
+    ):
+        crn_list, scrn_list, timed_out = request_manager.request_course_selection(
+            crn_list, scrn_list
+        )
+
         if timed_out:
-            Logger.log("Ders seçim isteği zaman aşımına uğradı, program 1 saat boyunca bekleyecek.")
-            Logger.log("Programı sonlandırmak için \"Ctrl+C\" yapabilirsiniz.")
+            Logger.log(
+                "Ders seçim isteği zaman aşımına uğradı, program 1 saat boyunca bekleyecek."
+            )
+            Logger.log('Programı sonlandırmak için "Ctrl+C" yapabilirsiniz.')
             try:
                 sleep(TIMEOUT_WAIT_DUR)
             except KeyboardInterrupt:
@@ -190,17 +265,21 @@ if __name__ == "__main__":
             break
 
         if len(crn_list) == 0 and len(scrn_list) == 0:
-            Logger.log(f"Bütün dersler başarıyla alındı/bırakıldı.")
+            Logger.log("Bütün dersler başarıyla alındı/bırakıldı.")
             break
 
         if not test_mode:
             Logger.log("Alınamayan dersler tekrar deneniyor...")
             print()
         else:
-            print("\n" + "="*20 + " TEST MODU " + "="*20)
-            Logger.log("Alınamayan dersler tekrar denenecekti fakat test modunda olduğundan dolayı bu aşama atlanacak...")
-            Logger.log("Kepler ders seçim işlem geçmişi sayfasını kontrol edin. Hata olarak aktif bir ders seçim zamanı içinde değilsiniz mesajını görüyorsanız, test başarılı demektir.")
-            print("="*51 + "\n")
+            print("\n" + "=" * 20 + " TEST MODU " + "=" * 20)
+            Logger.log(
+                "Alınamayan dersler tekrar denenecekti fakat test modunda olduğundan dolayı bu aşama atlanacak..."
+            )
+            Logger.log(
+                "Kepler ders seçim işlem geçmişi sayfasını kontrol edin. Hata olarak aktif bir ders seçim zamanı içinde değilsiniz mesajını görüyorsanız, test başarılı demektir."
+            )
+            print("=" * 51 + "\n")
             break
 
         sleep(DELAY_BETWEEN_TRIES)
@@ -208,7 +287,9 @@ if __name__ == "__main__":
     token_fetcher.stop()
 
     if not test_mode and (not len(crn_list) == 0 or not len(scrn_list) == 0):
-        Logger.log(f"Ders seçimi zaman aşımından dolayı sonlandırıldı. Alınamayan dersler: {crn_list}, Bırakılamayan Dersler {scrn_list}.")
+        Logger.log(
+            f"Ders seçimi zaman aşımından dolayı sonlandırıldı. Alınamayan dersler: {crn_list}, Bırakılamayan Dersler {scrn_list}."
+        )
 
     # Turn off the computer, if asked for it, else, just exit.
     if shutdown_on_complete:
