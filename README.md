@@ -29,7 +29,7 @@ Bu _repo_ sayesinde otomatik bir şekilde, önceden zamanlayarak ve _HTTP reques
 
    - Manuel olarak indirmek için ise _GitHub_ sayfasındaki yeşil "Code" Tuşuna basın ve açılan pencereden "Download ZIP" tuşuna basın. Ardından indirdiğiniz _ZIP_ dosyasını sağ tıklayıp ayıklayın.
 2. Kurulu değil ise _Python_ kurun. ([Detaylı bilgi](https://www.python.org/downloads/)). Kurulumda dikkat etmeniz gerekenler; ilk penceredeki _Add Python to PATH_ kutucuğunu ve _Optional Features_ bölümündeki _pip_ kutucuğunu tiklemeniz gerekiyor.
-3. Gerekli paketleri kurmak için aşağıdaki komutu çalıştırın.  
+3. Gerekli paketleri kurmak için aşağıdaki komutu çalıştırın.
 
    ```bash
    pip install -r requirements.txt
@@ -37,7 +37,7 @@ Bu _repo_ sayesinde otomatik bir şekilde, önceden zamanlayarak ve _HTTP reques
 
 4. Daha sonra yapmanız gereken, gerekli bilgileri programa girmek. Bunun için kurulum sihirbazını kullanmanız önerilir fakat isterseniz manuel olarak da girebilirsiniz.
    > ⚠️ Program zamanlama için bilgisayarınızın lokal zamanını kullanmaktadır, eğer bilgisayarınız Türkiye saat diliminde değil ise, lokal zamanınıza göre ders seçimi saatini ve tarihini giriniz.
-   
+   >
    > 💡 Kurulum sihirbazı, girilen CRN'lerin doğrulunu [ITU Helper SDK](https://github.com/itu-helper/sdk) ile kontrol etmektedir.
 
    - **[ÖNERİLEN] Kurulum Sihirbazı ile Kurulum:** Gerekli dosyaları oluşturmak için aşağıdaki kodu kullanarak kurulum sihirbazını çalıştırın, sürecin devamında ekrandaki adımları takip edin.
@@ -71,7 +71,7 @@ Bu _repo_ sayesinde otomatik bir şekilde, önceden zamanlayarak ve _HTTP reques
             "crn": [{ALINACAK CRN'ler, virgülle ayırılmış şekilde}],
             "scrn": [{BIRAKILACAK CRN'ler, virgülle ayırılmış şekilde}]
          }
-      }  
+      }
       ```
 
       </details>
@@ -101,7 +101,7 @@ Bu _repo_ sayesinde otomatik bir şekilde, önceden zamanlayarak ve _HTTP reques
             "crn": [21340, 21311, 21332],
             "scrn": []
          }
-      }  
+      }
       ```
 
       </details>
@@ -120,7 +120,7 @@ Bu _repo_ sayesinde otomatik bir şekilde, önceden zamanlayarak ve _HTTP reques
             "crn": [21340, "21345:21346", 21332],
             "scrn": []
          }
-      }  
+      }
       ```
 
       Bu örnekte:
@@ -164,7 +164,7 @@ Bu _repo_ sayesinde otomatik bir şekilde, önceden zamanlayarak ve _HTTP reques
    > 💡 Eğer program test modunda çalıştırılırsa, bu aşamada sadece girilen vaktin gelmesi beklenir.
 
 8. Ders seçiminin başlandığı algılandıktan `10` dakika (`src/run.py` dosyasındaki `SPAM_DUR` değişkeninin değeri belirler.) sonraya kadar; `3` saniye (`src/run.py` dosyasındaki `DELAY_BETWEEN_TRIES` değişkeninin değeri belirler.) aralıklarla ders seçimi için _HTTP request_ yollanır. Bu süreç, [İTÜ OBS (Kepler)](https://obs.itu.edu.tr/ogrenci/) arayüzüne durmadan CRN'lerin - `data/crn_list.txt` dosyasındaki sırayla - girilip onaylanması ile aynı sonucu yaratır fakat websitesi çökmelerine daha dayanıklıdır. Bü süreçte bütün işlemlerin başarılı olması durumda program otomatik olaran sonlandırılacaktır.
-9.  Süreç boyuncaki eylemler loglanır ve `logs/logs.txt` dosyasına kaydedilir.
+9. Süreç boyuncaki eylemler loglanır ve `logs/logs.txt` dosyasına kaydedilir.
 10. Program sonlanır ve programın başında onay verildiyse bilgisayar kapatılır.
 
 ## Nasıl Test Edilir
