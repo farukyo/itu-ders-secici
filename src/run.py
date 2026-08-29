@@ -216,7 +216,21 @@ if __name__ == "__main__":
         # Now, instead of waiting another 15 seconds, check the time every `DELAY_BETWEEN_TIME_CHECKS` seconds, to account for the difference in time between the server and the local machine.
         Logger.log("Ders seçiminin başlaması bekleniyor...")
         api_check_start_time = datetime.now().astimezone()
-        while request_manager.check_course_selection_time() is False:
+        while True:
+            is_open = request_manager.check_course_selection_time()
+            if is_open:
+                break
+
+            # No usable answer: the check cannot tell us anything, so it must
+            # not hold us past the time the user entered. OBS is at its busiest
+            # exactly when registration opens.
+            if is_open is None and datetime.now().astimezone() >= start_time:
+                Logger.log(
+                    "Ders seçimi zaman kontrolü cevap vermiyor ve girilen ders seçim "
+                    "saati geldi, seçime başlanıyor..."
+                )
+                break
+
             sleep(DELAY_BETWEEN_TIME_CHECKS)
             if (
                 datetime.now().astimezone() - api_check_start_time

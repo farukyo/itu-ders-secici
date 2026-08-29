@@ -115,7 +115,14 @@ class RequestManager:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
         }
 
-    def check_course_selection_time(self) -> bool:
+    def check_course_selection_time(self) -> bool | None:
+        """Whether registration is open.
+
+        True and False are answers from OBS; None means OBS did not give a
+        usable one. The caller needs that distinction: a "not yet" is worth
+        trusting over the local clock, but an unanswered check tells us
+        nothing, so it must not keep the caller waiting past the start time.
+        """
         try:
             response = requests.get(
                 self.course_time_check_url,
@@ -137,15 +144,15 @@ class RequestManager:
                 f"Ders seçim zamanı kontrol edilirken bağlantı hatası oluştu: {e}",
                 silent=True,
             )
-            return False
+            return None
         except (json.JSONDecodeError, KeyError, TypeError):
-            return False
+            return None
         except Exception as e:  # noqa: BLE001
             Logger.log(
                 f"Ders seçim zamanı kontrol edilirken beklenmeyen bir hata oluştu: {e}",
                 silent=True,
             )
-            return False
+            return None
 
     def request_course_selection(
         self, crn_list: list[str], scrn_list: list[str]
