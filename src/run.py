@@ -6,8 +6,6 @@ import sys
 from datetime import datetime, timedelta
 from time import sleep
 
-import requests
-
 from driver_manager import DriverManager
 from logger import Logger
 from request_manager import RequestManager
@@ -98,19 +96,6 @@ def read_inputs(
     return login, password, crn_list, scrn_list, backup_map, start_time
 
 
-def request_course_selection(
-    token: str, crn_list: list[str], scrn_list: list[str]
-) -> str:
-    response = requests.post(
-        COURSE_SELECTION_URL,
-        headers={"Authorization": token},
-        json={"ECRN": crn_list, "SCRN": scrn_list},
-    )
-
-    result_code = response.text
-    return result_code
-
-
 parser = argparse.ArgumentParser(
     prog="itu-ders-secici",
     description="İTÜ OBS (Kepler) üzerinden zamanlayıcılı ders seçim uygulaması.",
@@ -166,12 +151,11 @@ if __name__ == "__main__":
         delta = (
             start_time - datetime.now().astimezone() - timedelta(seconds=60 * 5)
         ).total_seconds()
-
-    if start_time is not None and delta > 0:
-        Logger.log(
-            f"Ders seçimine 5 dakika kalana kadar bekleniyor ({delta} saniye)..."
-        )
-        sleep(delta)
+        if delta > 0:
+            Logger.log(
+                f"Ders seçimine 5 dakika kalana kadar bekleniyor ({delta} saniye)..."
+            )
+            sleep(delta)
 
     # === MULTI-THREADED TOKEN FETCHING ===
     # Start token fetcher (will continuously refresh token in background)
