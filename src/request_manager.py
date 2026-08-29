@@ -1,11 +1,14 @@
-import requests
 import json
+from typing import ClassVar
+
+import requests
+
 from logger import Logger
 
 
 class RequestManager:
     # The codes that indicate the operation was not successful but can be tried again.
-    codes_to_try_again = [
+    codes_to_try_again: ClassVar[list[str]] = [
         "VAL01",
         "VAL02",
         "VAL06",
@@ -18,12 +21,16 @@ class RequestManager:
     ]
 
     # Codes that indicate quota is full - should switch to backup CRN
-    quota_full_codes = ["VAL06", "Kontenjan Dolu"]
-    success_codes = ["successResult", "Ekleme İşlemi Başarılı", "Silme İşlemi Başarılı"]
-    timeout_codes = ["VAL21"]
+    quota_full_codes: ClassVar[list[str]] = ["VAL06", "Kontenjan Dolu"]
+    success_codes: ClassVar[list[str]] = [
+        "successResult",
+        "Ekleme İşlemi Başarılı",
+        "Silme İşlemi Başarılı",
+    ]
+    timeout_codes: ClassVar[list[str]] = ["VAL21"]
 
     # Source: https://github.com/MustafaKrc/ITU-CRN-Picker/blob/ffb2ca20c197092f54ade466439d890cd61acab6/core/crn_picker.py#L31
-    return_values = {
+    return_values: ClassVar[dict[str | None, str]] = {
         "successResult": "CRN {} için işlem başarıyla tamamlandı.",
         "errorResult": "CRN {} için Operasyon tamamlanamadı.",
         None: "CRN {} için Operasyon tamamlanamadı.",
@@ -64,7 +71,7 @@ class RequestManager:
         token,
         course_selection_url: str,
         course_time_check_url: str,
-        backup_map: dict[str, str] = None,
+        backup_map: dict[str, str] | None = None,
     ) -> None:
         """
         Args:
@@ -90,8 +97,8 @@ class RequestManager:
 
     def _get_headers(self) -> dict[str, str]:
         return {
-            'Authorization': self._get_current_token(),
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
+            "Authorization": self._get_current_token(),
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
         }
 
     def check_course_selection_time(self) -> bool:
@@ -107,7 +114,7 @@ class RequestManager:
                 enrollment_data["ogrenciSinifaKayitOlabilir"]
                 or enrollment_data["ogrenciSiniftanAyrilabilir"]
             )
-        except Exception:
+        except (json.JSONDecodeError, KeyError, TypeError):
             return False
 
     def request_course_selection(
@@ -231,9 +238,9 @@ class RequestManager:
                 f"CRN listesi işlenirken JSON hatası meydana geldi, request geçerli bir JSON döndürmedi: {e}",
                 silent=True,
             )
-        except Exception as e:
+        except (KeyError, TypeError, ValueError) as e:
             Logger.log(
                 f"CRN listesi işlenirken bir hata meydana geldi: {e}", silent=True
             )
-        finally:
-            return crn_list, scrn_list, time_out_detected
+
+        return crn_list, scrn_list, time_out_detected

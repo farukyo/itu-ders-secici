@@ -1,7 +1,9 @@
-from requests import get
-from datetime import datetime
-from os import path, mkdir
 import json
+import sys
+from datetime import datetime
+from os import mkdir, path
+
+from requests import get
 
 ITU_HELPER_LESSONS_URL = (
     "https://raw.githubusercontent.com/itu-helper/data/main/lessons.psv"
@@ -18,7 +20,7 @@ LINE_SPACES = 2
 def eval_input(inp: str):
     if inp == "q":
         print("Sihirbaz sonlandırıldı.")
-        exit()
+        sys.exit()
 
     return inp.strip()
 
@@ -52,9 +54,9 @@ def ask_for_crn_list(allow_backup_crns: bool) -> tuple[list[str], float, list[fl
 
         no_match, backup_crn_no_match = False, False
         course_credits, backup_course_credits = None, None
-        if primary_crn not in crn_to_lesson.keys():
+        if primary_crn not in crn_to_lesson:
             no_match = True
-        elif backup_crn is not None and backup_crn not in crn_to_lesson.keys():
+        elif backup_crn is not None and backup_crn not in crn_to_lesson:
             backup_crn_no_match = True
         else:
             try:
@@ -63,7 +65,7 @@ def ask_for_crn_list(allow_backup_crns: bool) -> tuple[list[str], float, list[fl
 
                 try:
                     course_credits = float(course_credits)
-                except Exception:
+                except (ValueError, TypeError):
                     course_credits = None
 
                 print(
@@ -72,7 +74,7 @@ def ask_for_crn_list(allow_backup_crns: bool) -> tuple[list[str], float, list[fl
                 if course_credits is not None:
                     total_creds += course_credits
 
-            except Exception:
+            except (KeyError, ValueError):
                 no_match = True
 
             if backup_crn:
@@ -84,14 +86,14 @@ def ask_for_crn_list(allow_backup_crns: bool) -> tuple[list[str], float, list[fl
 
                     try:
                         backup_course_credits = float(backup_course_credits)
-                    except Exception:
+                    except (ValueError, TypeError):
                         backup_course_credits = None
 
                     print(f"  ↳ Yedek CRN: {backup_crn}.")
                     print(
                         f"  ↳ Yedek dersin ITU Helper veritabanında bulunan adı: {backup_course_code} ({backup_course_name}) [Kredi: {backup_course_credits if backup_course_credits is not None else '???'}]."
                     )
-                except Exception:
+                except (KeyError, ValueError):
                     backup_crn_no_match = True
 
         if course_credits is not None:
@@ -219,7 +221,7 @@ if __name__ == "__main__":
         )
         scrn_list, _, __ = ask_for_crn_list(allow_backup_crns=False)
 
-    selection_datetime = datetime(*[int(x) for x in time_text.split(" ")])
+    selection_datetime = datetime(*[int(x) for x in time_text.split(" ")]).astimezone()
 
     # Print the summary.
     print("Kurulum Tamamlandı, son olarak her şey doğru görünüyor mu?")

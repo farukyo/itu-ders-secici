@@ -1,16 +1,18 @@
 # === IMPORTS ===
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from seleniumwire import webdriver
-from logger import Logger
-
 import atexit
+from typing import ClassVar
+
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from seleniumwire import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+
+from logger import Logger
 
 
 # === CLASS DEFINITON ===
 class DriverManager:
-    active_drivers = []
+    active_drivers: ClassVar[list] = []
 
     @staticmethod
     def create_driver(headless: bool = False):

@@ -1,7 +1,6 @@
+import atexit
 from datetime import datetime
 from os import mkdir, path
-
-import atexit
 
 
 class Logger:
@@ -9,7 +8,7 @@ class Logger:
 
     @staticmethod
     def create_message(message) -> str:
-        return f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] {message}"
+        return f"[{datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] {message}"
 
     @staticmethod
     def log(message, silent: bool = False) -> None:
@@ -20,8 +19,8 @@ class Logger:
 
         try:
             Logger.save_logs()
-        except:
-            pass
+        except OSError as e:
+            print(f"Loglar dosyaya kaydedilirken bir hata oluştu: {e}")
 
     @staticmethod
     def save_logs(file_name: str = "temp_logs") -> None:
@@ -33,7 +32,7 @@ class Logger:
 
     @staticmethod
     def save_logs_with_time_stamp() -> None:
-        time_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        time_stamp = datetime.now().astimezone().strftime("%Y-%m-%d_%H-%M-%S")
         Logger.save_logs(f"logs_{time_stamp}")
 
 

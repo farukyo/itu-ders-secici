@@ -1,9 +1,12 @@
 # === IMPORTS ===
-from driver_manager import DriverManager
-from selenium.webdriver.common.by import By
-from time import sleep
-from logger import Logger
 import threading
+from time import sleep
+
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.common.by import By
+
+from driver_manager import DriverManager
+from logger import Logger
 
 # === CONSTANTS ===
 PAGE_LOAD_DELAY = 3
@@ -97,8 +100,8 @@ class ContinuousTokenFetcher(threading.Thread):
                         Logger.log(
                             f'Seçilen hesap: "{selected_field} ({selected_studentid})".'
                         )
-                    except Exception:
-                        pass
+                    except (IndexError, AttributeError, NoSuchElementException) as e:
+                        Logger.log(f"Seçilen hesap bilgisi okunamadı: {e}", silent=True)
 
                     select_button = identity_card.find_element(By.TAG_NAME, "a")
                     select_button.click()
@@ -159,7 +162,7 @@ class ContinuousTokenFetcher(threading.Thread):
                     if not self._started_event.is_set():
                         self._started_event.set()
                         Logger.log("İlk token başarıyla alındı.")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 Logger.log(f"Token fetch hatası: {e}", silent=True)
 
             sleep(TOKEN_REFRESH_INTERVAL)
@@ -180,8 +183,8 @@ class ContinuousTokenFetcher(threading.Thread):
         if self.driver:
             try:
                 self.driver.minimize_window()
-            except:
-                pass
+            except WebDriverException as e:
+                Logger.log(f"Tarayıcı penceresi küçültülemedi: {e}", silent=True)
 
     def has_token(self) -> bool:
         """Checks if a token exists."""
