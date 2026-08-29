@@ -3,7 +3,9 @@ import sys
 from datetime import datetime
 from os import mkdir, path
 
-from requests import get
+from requests import RequestException, get
+
+REQUEST_TIMEOUT = 30  # Seconds to wait for an HTTP response before giving up.
 
 ITU_HELPER_LESSONS_URL = (
     "https://raw.githubusercontent.com/itu-helper/data/main/lessons.psv"
@@ -151,14 +153,24 @@ def crn_list_to_lines(crn_list: list[str]) -> list[str]:
 if __name__ == "__main__":
     print("ITU Helper bağlantısı kuruluyor...")
     # Read the course names from ITU Helper.
-    lesson_lines = get(ITU_HELPER_LESSONS_URL).text.split("\n")
+    try:
+        lesson_lines = get(ITU_HELPER_LESSONS_URL, timeout=REQUEST_TIMEOUT).text.split(
+            "\n"
+        )
+        course_lines = get(ITU_HELPER_COURSES_URL, timeout=REQUEST_TIMEOUT).text.split(
+            "\n"
+        )
+    except RequestException as e:
+        print(f"ITU Helper veritabanına bağlanılamadı: {e}")
+        print("İnternet bağlantınızı kontrol edip sihirbazı tekrar çalıştırın.")
+        sys.exit(1)
+
     crn_to_lesson = {
         lesson.split("|")[0]: lesson.split("|")[1]
         for lesson in lesson_lines
         if len(lesson.split("|")) > 1
     }
 
-    course_lines = get(ITU_HELPER_COURSES_URL).text.split("\n")
     lesson_to_course = {
         course.split("|")[0]: (course.split("|")[1], course.split("|")[3])
         for course in course_lines

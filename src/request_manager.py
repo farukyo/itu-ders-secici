@@ -5,6 +5,20 @@ import requests
 
 from logger import Logger
 
+# (connect, read) timeouts.
+#
+# requests does not enable SO_KEEPALIVE, so if packets start being dropped
+# silently -- a wifi blip, a NAT entry expiring -- no FIN or RST ever arrives
+# and recv() waits indefinitely. A single such stall freezes the retry loop for
+# the rest of the registration window without printing anything.
+#
+# These budgets are deliberately generous: a live OBS answers well inside them
+# even under load, so they only fire on a genuinely dead connection. Course
+# selection gets the longer budget because it changes state -- abandoning a
+# request the server already processed is worse than waiting.
+TIME_CHECK_TIMEOUT = (5, 15)
+COURSE_SELECTION_TIMEOUT = (5, 60)
+
 
 class RequestManager:
     # The codes that indicate the operation was not successful but can be tried again.
@@ -102,18 +116,28 @@ class RequestManager:
         }
 
     def check_course_selection_time(self) -> bool:
-        response = requests.get(self.course_time_check_url, headers=self._get_headers())
-        Logger.log(
-            f"Zaman kontrol request response mesajı: {response.text}", silent=True
-        )
-
         try:
+            response = requests.get(
+                self.course_time_check_url,
+                headers=self._get_headers(),
+                timeout=TIME_CHECK_TIMEOUT,
+            )
+            Logger.log(
+                f"Zaman kontrol request response mesajı: {response.text}", silent=True
+            )
+
             result_json = json.loads(response.text)
             enrollment_data = result_json["kayitZamanKontrolResult"]
             return (
                 enrollment_data["ogrenciSinifaKayitOlabilir"]
                 or enrollment_data["ogrenciSiniftanAyrilabilir"]
             )
+        except requests.RequestException as e:
+            Logger.log(
+                f"Ders seçim zamanı kontrol edilirken bağlantı hatası oluştu: {e}",
+                silent=True,
+            )
+            return False
         except (json.JSONDecodeError, KeyError, TypeError):
             return False
         except Exception as e:  # noqa: BLE001
@@ -134,6 +158,7 @@ class RequestManager:
                 self.course_selection_url,
                 headers=self._get_headers(),
                 json={"ECRN": crn_list, "SCRN": scrn_list},
+                timeout=COURSE_SELECTION_TIMEOUT,
             )
         except Exception as e:  # noqa: BLE001
             Logger.log(
