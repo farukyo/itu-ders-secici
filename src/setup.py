@@ -263,7 +263,7 @@ if __name__ == "__main__":
     if not path.exists(DATA_DIR):
         mkdir(DATA_DIR)
 
-    with open(path.join(DATA_DIR, CONFIG_FILE_NAME), "w") as f:
+    with open(path.join(DATA_DIR, CONFIG_FILE_NAME), "w", encoding="utf-8") as f:
         json.dump(data_dict, f)
 
     print("Dosya başarıyla kaydedildi. Sihirbaz sonlandırıldı.")

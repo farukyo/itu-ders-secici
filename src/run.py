@@ -38,7 +38,7 @@ def read_inputs(
     test_mode: bool = False,
 ) -> tuple[str, str, list[str], list[str], dict[str, str], datetime | None]:
     Logger.log("Input dosyaları okunuyor...")
-    with open(CONFIG_FILE_PATH) as f:
+    with open(CONFIG_FILE_PATH, encoding="utf-8") as f:
         data = json.load(f)
 
     # Read account details
