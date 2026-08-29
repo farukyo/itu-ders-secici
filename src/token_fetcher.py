@@ -2,7 +2,6 @@
 import threading
 from time import sleep
 
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.by import By
 
 from driver_manager import DriverManager
@@ -100,7 +99,7 @@ class ContinuousTokenFetcher(threading.Thread):
                         Logger.log(
                             f'Seçilen hesap: "{selected_field} ({selected_studentid})".'
                         )
-                    except (IndexError, AttributeError, NoSuchElementException) as e:
+                    except Exception as e:  # noqa: BLE001
                         Logger.log(f"Seçilen hesap bilgisi okunamadı: {e}", silent=True)
 
                     select_button = identity_card.find_element(By.TAG_NAME, "a")
@@ -183,7 +182,7 @@ class ContinuousTokenFetcher(threading.Thread):
         if self.driver:
             try:
                 self.driver.minimize_window()
-            except WebDriverException as e:
+            except Exception as e:  # noqa: BLE001
                 Logger.log(f"Tarayıcı penceresi küçültülemedi: {e}", silent=True)
 
     def has_token(self) -> bool:

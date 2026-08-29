@@ -116,20 +116,36 @@ class RequestManager:
             )
         except (json.JSONDecodeError, KeyError, TypeError):
             return False
+        except Exception as e:  # noqa: BLE001
+            Logger.log(
+                f"Ders seçim zamanı kontrol edilirken beklenmeyen bir hata oluştu: {e}",
+                silent=True,
+            )
+            return False
 
     def request_course_selection(
         self, crn_list: list[str], scrn_list: list[str]
     ) -> tuple[list[str], list[str], bool]:
-        # Send the request to the server.
-        response = requests.post(
-            self.course_selection_url,
-            headers=self._get_headers(),
-            json={"ECRN": crn_list, "SCRN": scrn_list},
-        )
-        Logger.log(f"Ders Seçim request response mesajı: {response.text}", silent=True)
-
         time_out_detected = False
+
+        # Send the request to the server.
         try:
+            response = requests.post(
+                self.course_selection_url,
+                headers=self._get_headers(),
+                json={"ECRN": crn_list, "SCRN": scrn_list},
+            )
+        except Exception as e:  # noqa: BLE001
+            Logger.log(
+                f"Ders seçim requesti gönderilirken hata oluştu: {e}",
+                silent=True,
+            )
+            return crn_list, scrn_list, time_out_detected
+
+        try:
+            Logger.log(
+                f"Ders Seçim request response mesajı: {response.text}", silent=True
+            )
             result_json = json.loads(response.text)
 
             # Log the results of crn_list and determine if it is to be retried.
@@ -241,6 +257,11 @@ class RequestManager:
         except (KeyError, TypeError, ValueError) as e:
             Logger.log(
                 f"CRN listesi işlenirken bir hata meydana geldi: {e}", silent=True
+            )
+        except Exception as e:  # noqa: BLE001
+            Logger.log(
+                f"CRN listesi işlenirken beklenmeyen bir hata meydana geldi: {e}",
+                silent=True,
             )
 
         return crn_list, scrn_list, time_out_detected

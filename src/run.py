@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from time import sleep
 
 import requests
-from selenium.common.exceptions import WebDriverException
 
 from driver_manager import DriverManager
 from logger import Logger
@@ -206,7 +205,7 @@ if __name__ == "__main__":
     if token_fetcher.driver:
         try:
             token_fetcher.driver.minimize_window()
-        except WebDriverException as e:
+        except Exception as e:  # noqa: BLE001
             Logger.log(f"Tarayıcı penceresi küçültülemedi: {e}", silent=True)
 
     if headless:
