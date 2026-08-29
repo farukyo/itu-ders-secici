@@ -76,7 +76,7 @@ def ask_for_crn_list(allow_backup_crns: bool) -> tuple[list[str], float, list[fl
                 if course_credits is not None:
                     total_creds += course_credits
 
-            except (KeyError, ValueError):
+            except (KeyError, TypeError, ValueError):
                 no_match = True
 
             if backup_crn:
@@ -95,7 +95,7 @@ def ask_for_crn_list(allow_backup_crns: bool) -> tuple[list[str], float, list[fl
                     print(
                         f"  ↳ Yedek dersin ITU Helper veritabanında bulunan adı: {backup_course_code} ({backup_course_name}) [Kredi: {backup_course_credits if backup_course_credits is not None else '???'}]."
                     )
-                except (KeyError, ValueError):
+                except (KeyError, TypeError, ValueError):
                     backup_crn_no_match = True
 
         if course_credits is not None:
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     lesson_to_course = {
         course.split("|")[0]: (course.split("|")[1], course.split("|")[3])
         for course in course_lines
-        if len(course.split("|")) > 1
+        if len(course.split("|")) > 3
     }
 
     # Print the startup message.
@@ -196,16 +196,31 @@ if __name__ == "__main__":
 
     print("\n" * LINE_SPACES)
 
-    # Ask for the course selection time.
-    date = eval_input(
-        input(
-            'Ders seçim tarihini girin (YYYY.MM.DD, örnek: "2024.09.08", " kullanmayın): '
+    # Ask for the course selection time. It is validated right away on purpose:
+    # the value is not needed until the very end of the wizard, and a typo caught
+    # there would throw away every CRN entered in between.
+    while True:
+        date = eval_input(
+            input(
+                'Ders seçim tarihini girin (YYYY.MM.DD, örnek: "2024.09.08", " kullanmayın): '
+            )
         )
-    )
-    time = eval_input(
-        input('Ders seçim saatini girin (HH:mm, örnek: "17:00", " kullanmayın): ')
-    )
-    time_text = date.replace(".", " ") + " " + time.replace(":", " ")
+        time = eval_input(
+            input('Ders seçim saatini girin (HH:mm, örnek: "17:00", " kullanmayın): ')
+        )
+        time_text = date.replace(".", " ") + " " + time.replace(":", " ")
+
+        try:
+            selection_datetime = datetime(
+                *[int(x) for x in time_text.split(" ")]
+            ).astimezone()
+            break
+        except (TypeError, ValueError, OSError):
+            print(
+                'Girilen tarih/saat geçersiz. Tarihi "YYYY.MM.DD", saati "HH:mm" '
+                "biçiminde girin (örnek: 2024.09.08 ve 17:00)."
+            )
+            print()
 
     print("\n" * LINE_SPACES)
 
@@ -232,8 +247,6 @@ if __name__ == "__main__":
             "Bırakmak istediğiniz derslerin CRN'lerini girin, bitirmek için hiç bir şey girmeden Enter tuşuna basın."
         )
         scrn_list, _, __ = ask_for_crn_list(allow_backup_crns=False)
-
-    selection_datetime = datetime(*[int(x) for x in time_text.split(" ")]).astimezone()
 
     # Print the summary.
     print("Kurulum Tamamlandı, son olarak her şey doğru görünüyor mu?")

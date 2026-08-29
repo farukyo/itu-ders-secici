@@ -89,7 +89,7 @@ def read_inputs(
                 time_data.get("seconds") if "seconds" in time_data else 0,
             ).astimezone()
             Logger.log(f"Ders seçim zamanı ve tarihi okundu: {start_time}.")
-        except (TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError, AttributeError, OSError):
             start_time = datetime.now().astimezone()
             Logger.log(
                 "Ders seçim zamanı ve tarihi girilmedi, ders seçimine hemen başlanacak."
